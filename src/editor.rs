@@ -32,7 +32,7 @@ impl Editor {
     pub fn default() -> Self {
         Self {
             should_quit: false,
-            terminal: Terminal::default.expect("Failed to initialize terminal"),
+            terminal: Terminal::default().expect("Failed to initialize terminal"),
             cursor_position: Position { x: 0, y: 0 },
         }
     }
@@ -50,7 +50,7 @@ impl Editor {
         }
 
         Terminal::cursor_show();
-        Terminal::flush();
+        Terminal::flush()
     }
 
     fn process_keypress(&mut self) -> Result<(), std::io::Error> {
@@ -100,7 +100,7 @@ impl Editor {
     }
 
     fn draw_welcome_message(&self) {
-        let mut welcome_message = format!("Hecto editor -- version {}", VERSION);
+        let mut welcome_message = format!("Hecto editor");
         let width = self.terminal.size().width as usize;
         let len = welcome_message.len();
         let padding = width.saturating_sub(len) / 2;
@@ -129,5 +129,5 @@ impl Editor {
 
 fn die(e: std::io::Error) {
     Terminal::clear_screen();
-    panic!(e);
+    panic!("{}", e);
 }
