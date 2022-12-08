@@ -1,7 +1,14 @@
 use crate::Document;
+use crate::Row;
 use crate::Terminal;
+use std::env;
 use std::time::Instant;
+use termion::color;
 use termion::event::Key;
+
+const STATUS_FG_COLOR: color::Rgb = color::Rgb(63, 63, 63);
+const STATUS_BG_COLOR: color::Rgb = color::Rgb(239, 239, 239);
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Default)]
 pub struct Position {
@@ -27,7 +34,9 @@ pub struct Editor {
     should_quit: bool,
     terminal: Terminal,
     cursor_position: Position,
+    offset: Position,
     document: Document,
+    status_message: StatusMessage,
 }
 
 impl Editor {
@@ -48,24 +57,46 @@ impl Editor {
     }
 
     pub fn default() -> Self {
+        let args: Vec<String> = env::args().collect();
+        let mut initial_status = String::from("HELP: Ctrl-Q = quit");
+        let document = if args.len() > 1 {
+            let file_name = &args[1];
+            let doc = Document::open(&file_name);
+            if doc.is_ok() {
+                doc.unwrap()
+            } else {
+                initial_status = format!("ERR: Could not open file: {}", file_name);
+                Document::default()
+            }
+        } else {
+            Document::default()
+        };
+
         Self {
             should_quit: false,
             terminal: Terminal::default().expect("Failed to initialize terminal"),
-            document: Document::default(),
-            cursor_position: Position { x: 0, y: 0 },
+            document,
+            cursor_position: Position::default(),
+            offset: Position::default(),
+            status_message: StatusMessage::from(initial_status),
         }
     }
 
     fn refresh_sreen(&self) -> Result<(), std::io::Error> {
         Terminal::cursor_hide();
-        Terminal::cursor_position(&Position { x: 0, y: 0 });
+        Terminal::cursor_position(&Position::default());
 
         if self.should_quit {
             Terminal::clear_screen();
             println!("Goodbye.\r");
         } else {
             self.draw_rows();
-            Terminal::cursor_position(&self.cursor_position);
+            self.draw_status_bar();
+            self.drow_message_bar();
+            Terminal::cursor_position(&Position {
+                x: self.cursor_position.x.saturating_sub(self.offset.x),
+                y: self.cursor_position.y.saturating_sub(self.offset.y),
+            });
         }
 
         Terminal::cursor_show();
@@ -74,6 +105,7 @@ impl Editor {
 
     fn process_keypress(&mut self) -> Result<(), std::io::Error> {
         let pressed_key = Terminal::read_key()?;
+
         match pressed_key {
             Key::Ctrl('q') => self.should_quit = true,
             Key::Up
@@ -86,7 +118,29 @@ impl Editor {
             | Key::Home => self.move_cursor(pressed_key),
             _ => (),
         }
+
+        self.scroll();
+
         Ok(())
+    }
+
+    fn scroll(&mut self) {
+        let Position { x, y } = self.cursor_position;
+        let width = self.terminal.size().width as usize;
+        let height = self.terminal.size().height as usize;
+        let mut offset = &mut self.offset;
+
+        if y < offset.y {
+            offset.y = y;
+        } else if y >= offset.y.saturating_add(height) {
+            offset.y = y.saturating_sub(height).saturating_add(1);
+        }
+
+        if x < offset.x {
+            offset.x = x;
+        } else if x >= offset.x.saturating_add(width) {
+            offset.x = x.saturating_sub(width).saturating_add(1);
+        }
     }
 
     fn move_cursor(&mut self, key: Key) {
