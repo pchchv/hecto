@@ -28,6 +28,6 @@ cargo build
 
 <div align="right">
 
-##### *Inspired by [Philipp Flenker](philippflenker.com/hecto)*
+##### *Inspired by [Philipp Flenker](https://www.philippflenker.com/hecto)*
 
 </div>
