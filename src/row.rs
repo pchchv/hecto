@@ -1,6 +1,7 @@
 use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 
+#[derive(Default)]
 pub struct Row {
     string: String,
     len: usize,
@@ -8,13 +9,10 @@ pub struct Row {
 
 impl From<&str> for Row {
     fn from(slice: &str) -> Self {
-        let mut row = Self {
+        Self {
             string: String::from(slice),
-            len: 0,
-        };
-
-        row.update_len();
-        row
+            len: slice.graphemes(true).count(),
+        }
     }
 }
 
