@@ -1,10 +1,26 @@
 use crate::Document;
 use crate::Terminal;
+use std::time::Instant;
 use termion::event::Key;
 
+#[derive(Default)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
+}
+
+struct StatusMessage {
+    text: String,
+    time: Instant,
+}
+
+impl StatusMessage {
+    fn from(message: String) -> Self {
+        Self {
+            text: message,
+            time: Instant::now(),
+        }
+    }
 }
 
 pub struct Editor {
