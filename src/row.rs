@@ -67,7 +67,58 @@ impl Row {
         }
 
         self.len = length;
-
         self.string = result;
+    }
+
+    pub fn delete(&mut self, at: usize) {
+        if at >= self.len() {
+            return;
+        }
+
+        let mut result: String = String::new();
+        let mut length = 0;
+
+        for (index, grapheme) in self.string[..].graphemes(true).enumerate() {
+            if index != at {
+                length += 1;
+                result.push_str(grapheme);
+            }
+        }
+
+        self.len = length;
+        self.string = result;
+    }
+
+    pub fn append(&mut self, new: &Self) {
+        self.string = format!("{}{}", self.string, new.string);
+        self.len += new.len;
+    }
+
+    pub fn split(&mut self, at: usize) -> Self {
+        let mut row: String = String::new();
+        let mut length = 0;
+        let mut splitted_row: String = String::new();
+        let mut splitted_length = 0;
+
+        for (index, grapheme) in self.string[..].graphemes(true).enumerate() {
+            if index < at {
+                length += 1;
+                row.push_str(grapheme);
+            } else {
+                splitted_length += 1;
+                splitted_row.push_str(grapheme);
+            }
+        }
+
+        self.string = row;
+        self.len = length;
+        Self {
+            string: splitted_row,
+            len: splitted_length,
+        }
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        self.string.as_bytes()
     }
 }
