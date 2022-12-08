@@ -43,7 +43,7 @@ pub struct Editor {
 impl Editor {
     pub fn run(&mut self) {
         loop {
-            if let Err(error) = self.refresh_sreen() {
+            if let Err(error) = self.refresh_screen() {
                 die(error);
             }
 
@@ -83,7 +83,7 @@ impl Editor {
         }
     }
 
-    fn refresh_sreen(&self) -> Result<(), std::io::Error> {
+    fn refresh_screen(&self) -> Result<(), std::io::Error> {
         Terminal::cursor_hide();
         Terminal::cursor_position(&Position::default());
 
@@ -109,6 +109,7 @@ impl Editor {
 
         match pressed_key {
             Key::Ctrl('q') => self.should_quit = true,
+            Key::Char(c) => self.document.insert(&self.cursor_position, c),
             Key::Up
             | Key::Down
             | Key::Left
