@@ -1,10 +1,13 @@
+use crate::highlighting;
 use crate::SearchDirection;
 use std::cmp;
+use termion::color;
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Default)]
 pub struct Row {
     string: String,
+    highlighting: Vec<highlighting::Type>,
     len: usize,
 }
 
@@ -12,6 +15,7 @@ impl From<&str> for Row {
     fn from(slice: &str) -> Self {
         Self {
             string: String::from(slice),
+            highlighting: Vec::new(),
             len: slice.graphemes(true).count(),
         }
     }
@@ -29,10 +33,21 @@ impl Row {
             .skip(start)
             .take(end - start)
         {
-            if grapheme == "\t" {
-                result.push_str(" ");
-            } else {
-                result.push_str(grapheme);
+            if let Some(c) = grapheme.chars().next() {
+                if c == '\t' {
+                    result.push_str(" ");
+                } else if c.is_ascii_digit() {
+                    result.push_str(
+                        &format!(
+                            "{}{}{}",
+                            termion::color::Fg(color::Rgb(220, 163, 163)),
+                            c,
+                            color::Fg(color::Reset)
+                        )[..],
+                    );
+                } else {
+                    result.push(c);
+                }
             }
         }
 
@@ -115,6 +130,7 @@ impl Row {
         self.len = length;
         Self {
             string: splitted_row,
+            highlighting: Vec::new(),
             len: splitted_length,
         }
     }
@@ -164,5 +180,19 @@ impl Row {
             }
         }
         None
+    }
+
+    pub fn highlight(&mut self) {
+        let mut highlighting = Vec::new();
+
+        for c in self.string.chars() {
+            if c.is_ascii_digit() {
+                highlighting.push(highlighting::Type::Number);
+            } else {
+                highlighting.push(highlighting::Type::None);
+            }
+        }
+
+        self.highlighting = highlighting;
     }
 }
