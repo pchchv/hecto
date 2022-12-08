@@ -1,3 +1,4 @@
+use crate::SearchDirection;
 use std::cmp;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -122,7 +123,7 @@ impl Row {
         self.string.as_bytes()
     }
 
-    pub fn find(&self, query: &str) -> Option<usize> {
+    pub fn find(&self, query: &str, at: usize, direction: SearchDirection) -> Option<usize> {
         let matching_byte_index = self.string.find(query);
 
         if let Some(matching_byte_index) = matching_byte_index {
