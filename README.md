@@ -4,8 +4,6 @@
 
 ## *A simple text editor with highlighting written in Rust*
 
-#
-
 </div>
 
 ## To run editor
